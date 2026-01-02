@@ -25,3 +25,45 @@ CreateThread(function()
 
   SetModelAsNoLongerNeeded(npcModel)
 end)
+
+CreateThread(function()
+  while true do
+    local sleep = 1000
+    local playerPed = PlayerPedId()
+    local playerCoords = GetEntityCoords(playerPed)
+
+    local distance = #(playerCoords - npcCoords)
+
+    if distance < 5.0 then
+      sleep = 0
+
+      DrawText3D(npcCoords.x, npcCoords.y, npcCoords.z + 1.0, "E Emprego")
+
+      if IsControlJustPressed(0, 38) then
+        print("Emprego aceito")
+      end
+    end
+    Wait(sleep)
+  end
+end)
+
+
+function DrawText3D(x, y, z, text)
+  local onScreen, _x, _y = World3dToScreen2d(x, y, z)
+
+  local key, value = text:match("^(%S+)%s*(.*)$")
+
+  if onScreen then
+    SetTextScale(0.35, 0.35)
+    SetTextFont(4)
+    SetTextProportional(1)
+
+    SetTextCentre(true)
+    SetTextEntry("STRING")
+    AddTextComponentString(
+      "[~r~" .. key:gsub("[%[%]]", "") .. "~s~] " .. value
+    )
+
+    DrawText(_x, _y)
+  end
+end
