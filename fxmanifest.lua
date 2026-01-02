@@ -1,7 +1,15 @@
 fx_version 'cerulean'
 game 'gta5'
 
-description 'emprego delivery'
+description 'Emprego delivery'
+
+ui_page 'html/index.html'
+
+files {
+    'html/index.html',
+    'html/script.js',
+}
+
 
 client_scripts {
 	'client/main.lua',
