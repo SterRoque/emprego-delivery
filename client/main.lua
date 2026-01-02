@@ -1,7 +1,9 @@
 local npc = nil
 local npcCoords = vector3(94.0, 285.50, 110.21)
-local acceptedJob = false
+local inService = false
 local markerVehicle = vector3(106.36, 301.69, 110.02)
+local vehicle = nil
+local prop = nil
 
 CreateThread(function()
   local npcModel = GetHashKey("a_m_y_smartcaspat_01")
@@ -55,13 +57,54 @@ end)
 CreateThread(function()
   while true do
     Wait(0)
-    if acceptedJob then
+    if inService then
       local distance = #(GetEntityCoords(PlayerPedId()) - markerVehicle)
       if distance < 5.0 then
         DrawText3D(markerVehicle.x, markerVehicle.y, markerVehicle.z + 1.0, "E Veiculo")
       end
       DrawMarker(36, markerVehicle.x, markerVehicle.y, markerVehicle.z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 255,
         0, 0, 150, true, true, 2, true, nil, nil, false)
+    end
+  end
+end)
+
+RegisterKeyMapping('spawnDeliveryVehicle', 'Spawnar Veiculo Delivery', 'keyboard', 'E')
+RegisterCommand('spawnDeliveryVehicle', function()
+  if inService then
+    local distance = #(GetEntityCoords(PlayerPedId()) - markerVehicle)
+    if distance < 5.0 and not DoesEntityExist(vehicle) then
+      local vehicleModel = GetHashKey("faggio")
+      local propBag = GetHashKey("v_club_vu_djbag")
+
+      RequestModel(vehicleModel)
+      while not HasModelLoaded(vehicleModel) do
+        Wait(0)
+      end
+
+      prop = CreateObject(propBag, 0.0, 0.0, 0.0, true, true, true)
+      vehicle = CreateVehicle(vehicleModel, markerVehicle.x, markerVehicle.y, markerVehicle.z, 0.0, true, false)
+      SetVehicleNumberPlateText(vehicle, "DELIVERY")
+
+      AttachEntityToEntity(prop, vehicle, GetEntityBoneIndexByName(vehicle, "boot"), 0.0, -0.75, 0.25, 0.0, 0.0,
+        0.0, false, false, false, false, 2, true)
+
+      SetPedIntoVehicle(PlayerPedId(), vehicle, -1)
+    end
+  end
+end, false)
+
+
+CreateThread(function()
+  while true do
+    Wait(0)
+    local distance = #(GetEntityCoords(PlayerPedId()) - GetEntityCoords(vehicle))
+
+    if distance < 3.0 then
+      if DoesEntityExist(vehicle) and not IsPedInVehicle(PlayerPedId(), vehicle) then
+        if IsControlJustPressed(0, 23) then
+          TaskEnterVehicle(PlayerPedId(), vehicle, 2000, -1, 2.0, 1, 0)
+        end
+      end
     end
   end
 end)
@@ -73,9 +116,18 @@ end)
 
 RegisterNuiCallback("acceptedJob", function(data, cb)
   SetNuiFocus(false, false)
-  acceptedJob = data.accepted
 
-  print("Aceitou o Emprego")
+  if inService and not data.accepted then
+    if DoesEntityExist(vehicle) then 
+      DeleteEntity(vehicle)
+      DeleteEntity(prop)
+      prop = nil
+      vehicle = nil
+    end
+  end
+
+  inService = data.accepted
+
   cb("ok")
 end)
 
